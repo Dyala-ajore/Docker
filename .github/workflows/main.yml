@@ -8,32 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: petclinic
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for PostgreSQL
-        run: |
-          echo "Waiting for PostgreSQL to be ready..."
-          timeout 90s bash -c 'until nc -z localhost 5432; do sleep 1; done'
-          echo "PostgreSQL is ready!"
-
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
@@ -46,19 +21,12 @@ jobs:
       - name: Build and test
         uses: docker/build-push-action@v7
         with:
-          context: .
           target: test
           load: true
-        env:
-          SPRING_PROFILES_ACTIVE: postgres
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/petclinic
-          SPRING_DATASOURCE_USERNAME: user
-          SPRING_DATASOURCE_PASSWORD: password
 
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: .
           platforms: linux/amd64,linux/arm64
           push: true
           target: final
